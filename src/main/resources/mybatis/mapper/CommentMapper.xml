@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zjg.blog.mapper.CommentMapper">
+
+    <sql id="commentAllColumn">
+        comment_id, comment_nick_name, comment_email, comment_portrait, comment_content,
+        comment_is_admin, comment_create_time, comment_blog_id, comment_parent_id,
+        comment_parent_nick_name
+    </sql>
+    
+    <resultMap id="commentResultMap" type="com.zjg.blog.pojo.Comment" autoMapping="true">
+        <id property="commentId" column="comment_id" />
+        <association property="parentComment"
+                    select="com.zjg.blog.mapper.CommentMapper.selectCommentByParentId"
+                    column="comment_parent_id"></association>
+    </resultMap>
+
+    <insert id="insertComment" useGeneratedKeys="true" keyColumn="comment_id" keyProperty="commentId" >
+        insert into blog_comment value (null, #{commentNickName}, #{commentEmail}, #{commentPortrait},
+        #{commentContent}, #{commentIsAdmin}, #{commentCreateTime}, #{commentBlogId}, #{commentParentId}, #{commentParentNickName})
+    </insert>
+
+    <select id="selectCommentNotParentByBlogId" resultType="comment">
+        select <include refid="commentAllColumn"></include>
+        from blog_comment where comment_parent_id is null and comment_blog_id=#{blogId} order by comment_create_time desc
+    </select>
+
+    <select id="selectCommentByParentId" resultType="comment">
+        select <include refid="commentAllColumn"></include>
+        from blog_comment where comment_blog_id=#{blogId} and comment_parent_id =#{parentId} order by comment_create_time desc
+    </select>
+
+
+</mapper>

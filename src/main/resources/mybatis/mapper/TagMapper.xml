@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：名称空间：指定接口的全类名 -->
+<mapper namespace="com.zjg.blog.mapper.TagMapper">
+
+
+    <sql id="tagAllColumn">
+        tag_id, tag_name
+    </sql>
+    <select id="selectTagByTagId" resultType="tag">
+        select <include refid="tagAllColumn"></include>
+        from blog_tag
+        where tag_id=#{tagId}
+    </select>
+
+    <select id="selectTagByTagName" resultType="tag">
+        select <include refid="tagAllColumn"></include>
+        from blog_tag
+        where tag_name=#{tagName}
+    </select>
+
+    <select id="selectTagAll" resultType="tag">
+        select <include refid="tagAllColumn"></include>
+        from blog_tag order by tag_id
+    </select>
+
+    <insert id="insertTag" parameterType="tag" useGeneratedKeys="true" keyProperty="tagId">
+        insert into blog_tag values (null, #{tagName})
+    </insert>
+
+    <delete id="deleteTagByTagId">
+        delete from blog_tag where tag_id=#{tagId}
+    </delete>
+
+    <delete id="deleteTagBlog">
+        delete from blog_blog_tag where blog_tag_tag_id=#{tagId}
+    </delete>
+
+    <update id="updateTag" parameterType="tag">
+        update blog_tag set tag_name=#{tagName} where tag_id=#{tagId}
+    </update>
+
+    <select id="topTag" resultType="tag">
+        SELECT tag_id, tag_name, COUNT(*)
+        FROM blog_tag bt
+        LEFT OUTER JOIN blog_blog_tag bbt ON bt.`tag_id`=bbt.`blog_tag_tag_id`
+        LEFT OUTER JOIN blog_blog bb ON bbt.`blog_tag_blog_id` = bb.`blog_id`
+        GROUP BY tag_id
+        ORDER BY COUNT(*) DESC
+        LIMIT #{topCount};
+    </select>
+
+</mapper>

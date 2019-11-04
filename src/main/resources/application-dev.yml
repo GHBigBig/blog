@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://192.168.58.128:3306/blog?useUnicode=true&characterEncoding=utf8&useSSL=false
+    username: root
+    password: ceshiji
+
+  #设置 redis
+  redis:
+    host: 192.168.58.128
+    #禁用模板引擎编译的缓存结果。
+  thymeleaf:
+    cache: false
+
+
+
+logging:
+  level:
+    root: info
+    com.zjg: debug
+    com.zjg.blog.mapper: trace
+  file: log/blog-dev.log
+
+
+mybatis:
+  config-location: classpath:/mybatis/mybatis-config.xml
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+
+#设置 mybatis 的分页方言
+pagehelper:
+  helperDialect: mysql
+
+#详细展示自动配置
+debug: true
+
+
+
+# 设置首页中博客的条数 博客个数，博客分类个数，博客标签个数，推荐的博客个数
+server:
+    context-parameters:
+      indexBlogCount: 5
+      indexTypeCount: 6
+      indexTagCount: 10
+      indexRecommendCount: 5
+
+blog:
+  comment:
+    portrait : /images/avatar.png

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head th:replace="admin/_fragments :: head(~{::title})">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>博客管理</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/semantic-ui/2.2.4/semantic.min.css">
+  <link rel="stylesheet" href="../../static/css/me.css">
+</head>
+<body>
+
+  <!--导航-->
+  <nav th:replace="admin/_fragments :: menu(1)" class="ui inverted attached segment m-padded-tb-mini m-shadow-small" >
+  </nav>
+
+  <div class="ui attached pointing menu">
+    <div class="ui container">
+      <div class="right menu">
+        <a href="#" th:href="@{/admin/blogs/input}" class=" item">发布</a>
+        <a href="#" th:href="@{/admin/blogs}" class="teal active item">列表</a>
+      </div>
+    </div>
+  </div>
+
+  <!--中间内容-->
+  <div  class="m-container-small m-padded-tb-big">
+    <div class="ui container">
+      <div  class="ui secondary segment form">
+        <input type="hidden" name="pageNum" th:value="${pageInfo.pageNum}">
+        <input type="hidden" name="pageSize" th:value="${pageInfo.pageSize}">
+        <input type="hidden" name="navigatePages" th:value="${pageInfo.navigatePages}">
+        <div class="inline fields">
+          <div class="field">
+            <input type="text" name="blogTitle" placeholder="标题">
+          </div>
+          <div class="field">
+            <div class="ui labeled action input">
+              <div class="ui type selection dropdown">
+                <input type="hidden" name="typeId">
+                <i class="dropdown icon"></i>
+                <div class="default text">分类</div>
+                <div class="menu">
+                  <div th:each="type : ${types}" class="item" data-value="1" th:data-value="${type.typeId}" th:text="${type.typeName}">错误日志</div>
+                  <!--/*-->
+                  <div class="item" data-value="2">开发者手册</div>
+                  <!--*/-->
+                </div>
+              </div>
+              <button id="clear-btn" class="ui compact button">clear</button>
+            </div>
+
+          </div>
+          <div class="field">
+            <div class="ui checkbox">
+              <input type="checkbox" id="blogRecommend" name="blogRecommend">
+              <label for="blogRecommend">推荐</label>
+            </div>
+          </div>
+
+          <input type="hidden" name="blogTitleOld" value="">
+          <input type="hidden" name="typeIdOld" value="">
+          <input type="hidden" name="blogRecommendOld" value="false">
+
+          <div class="field">
+            <button  type="button" id="search-btn" class="ui mini teal basic button"><i class="search icon"></i>搜索</button>
+          </div>
+        </div>
+      </div>
+      <div id="table-container">
+        <table th:fragment="blogList" class="ui compact teal table">
+          <thead>
+          <tr>
+            <th></th>
+            <th>标题</th>
+            <th>类型</th>
+            <th>推荐</th>
+            <th>状态</th>
+            <th>更新时间</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="blog,iterStat : ${pageInfo.list}">
+            <td th:text="${iterStat.count}">1</td>
+            <td th:text="${blog.blogTitle}">刻意练习清单</td>
+            <td th:text="${blog.type.typeName}">认知升级</td>
+            <td th:text="${blog.blogRecommend} ? '是':'否'">是</td>
+            <td th:text="${blog.blogPublished} ? '发布':'草稿'">草稿</td>
+            <td th:text="${blog.blogUpdateTime}">2017-10-02 09:45</td>
+            <td>
+              <a href="#" th:href="@{/admin/blogs/{id}/input(id=${blog.blogId})}" class="ui mini teal basic button">编辑</a>
+              <a href="#" th:href="@{/admin/blogs/{id}/delete(id=${blog.blogId})}" class="ui mini red basic button">删除</a>
+            </td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <th colspan="7">
+              <!-- 总页数大于 1 才会显示此页面 -->
+              <div class="ui mini pagination menu" th:if="${pageInfo.pages}>1">
+                <!-- 这是为了 js 传值，下一行是分页展示的逻辑 -->
+                <a onclick="page(this)" th:attr="data-num=${pageInfo.prePage}, data-size=${pageInfo.pageSize}, data-navigate=${pageInfo.navigatePages}"
+                   th:if="${pageInfo.prePage}>0" href="javascript:void(0);" class="  item">上一页</a>
+
+                <!-- 未显示首页显示 ... -->
+                <a class=" item" th:if="${pageInfo.firstPage}>1">...</a>
+                <!-- 选择页码 -->
+                <div th:each="navNum,iterStat : ${pageInfo.getNavigatepageNums()}">
+
+                  <!-- [(${navNum})] th:utext 不转义特殊字符 -->
+                  <!-- js 传值 -->
+                  <a onclick="page(this)" th:attr="data-num=${navNum}, data-size=${pageInfo.pageSize}, data-navigate=${pageInfo.navigatePages}"
+                     href="javascript:void(0);"
+                     class="  item" th:classappend="${navNum==pageInfo.pageNum} ? 'active'">
+                    [(${navNum})]
+                  </a>
+
+
+                </div>
+                <!-- 未显示尾页显示 ... -->
+                <a class=" item" href="javascript:void(0);" th:if="${pageInfo.firstPage}>0 and ${pageInfo.lastPage}<${pageInfo.pages}">...</a>
+                <!-- js 传值 -->
+                <a onclick="page(this)" th:attr="data-num=${pageInfo.nextPage}, data-size=${pageInfo.pageSize}, data-navigate=${pageInfo.navigatePages}"
+                   th:if="${pageInfo.nextPage}>0" href="javascript:void(0);" class=" item">下一页</a>
+
+                <!-- url 中多参数的写法 -->
+              </div>
+              <a href="#" th:href="@{/admin/blogs/input}" class="ui mini right floated teal basic button">新增</a>
+            </th>
+          </tr>
+          </tfoot>
+        </table>
+
+        <div class="ui success message" th:unless="${#strings.isEmpty(message)}">
+          <i class="close icon"></i>
+          <div class="header">提示：</div>
+          <p th:text="${message}">恭喜，操作成功！</p>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <br>
+  <br>
+  <!--底部footer-->
+  <footer th:replace="admin/_fragments :: footer" class="ui inverted vertical segment m-padded-tb-massive">
+
+  </footer>
+  <!--/*/<th:block th:replace="admin/_fragments :: script">/*/-->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.4/semantic.min.js"></script>
+  <!--/*/</th:block>/*/-->
+  <script>
+    $('.menu.toggle').click(function () {
+      $('.m-item').toggleClass('m-mobile-hide');
+    });
+
+    $('.ui.dropdown').dropdown({
+      on : 'hover'
+    });
+
+    //消息提示关闭初始化
+    $('.message .close')
+      .on('click', function () {
+        $(this)
+          .closest('.message')
+          .transition('fade');
+      });
+
+    $('#clear-btn')
+      .on('click', function() {
+        $('.ui.type.dropdown')
+          .dropdown('clear')
+        ;
+      })
+    ;
+
+    function page(obj) {
+      // 给 name 为 pageNum 的域赋值，值为传进来的 obj 的 pageNum 的值，
+      var v1 =  $("[name='blogRecommend']").prop('checked');
+      $("[name='pageNum']").val($(obj).data("num"));
+      $("[name='pageSize']").val($(obj).data("size"));
+      $("[name='navigatePages']").val($(obj).data("navigate"));
+
+      loaddatapage();
+    }
+
+    $("#search-btn").click(function () {
+      // $("[name='page']").val(0);
+      $("[name='pageNum']").val(1);
+      $("[name='pageSize']").val(5);
+      $("[name='navigatePages']").val(5);
+
+      $("[name='blogTitleOld']").val($("input[name='blogTitle']").val());
+      $("[name='typeIdOld']").val($("[name='typeId']").val());
+      $("[name='blogRecommendOld']").val($("[name='blogRecommend']").prop('checked'));
+
+      loaddatasearch();
+    });
+
+    function loaddatapage() {
+      $("#table-container").load(/*[[@{/admin/blogs/search}]]*/"/admin/blogs/search",{
+        blogTitle : $("input[name='blogTitleOld']").val(),
+        typeId : $("[name='typeIdOld']").val(),
+        blogRecommend : $("[name='blogRecommendOld']").val()  ,
+        pageNum : $("[name='pageNum']").val(),
+        pageSize : $("[name='pageSize']").val(),
+        navigatePages : $("[name='navigatePages']").val(),
+      });
+    }
+
+    function loaddatasearch() {
+      $("#table-container").load(/*[[@{/admin/blogs/search}]]*/"/admin/blogs/search",{
+        blogTitle : $("input[name='blogTitle']").val(),
+        typeId : $("[name='typeId']").val(),
+        blogRecommend : $("[name='blogRecommend']").prop('checked'),
+        pageNum : $("[name='pageNum']").val(),
+        pageSize : $("[name='pageSize']").val(),
+        navigatePages : $("[name='navigatePages']").val(),
+      });
+    }
+
+  </script>
+</body>
+</html>

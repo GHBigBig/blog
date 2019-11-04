@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：名称空间：指定接口的全类名 -->
+<mapper namespace="com.zjg.blog.mapper.TypeMapper">
+
+
+    <sql id="typeAllColumn">
+        type_id, type_name
+    </sql>
+    <!--<select id="selectType" resultType="type">
+        select <include refid="typeAllColumn"></include> from blog_type
+        <where>
+            <foreach collection="attributes" item="attribute">
+                <if test="attribute == 'typeId'">
+                    and type_id = #{type.typeId}
+                </if>
+                <if test="attribute == 'typeName'">
+                    and type_name = #{type.typeName}
+                </if>
+            </foreach>
+        </where>
+    </select>-->
+
+    <select id="selectTypeByTypeId" resultType="type">
+        select <include refid="typeAllColumn"></include> from blog_type
+        where type_id=#{typeId}
+    </select>
+
+    <select id="selectTypeByTypeName" resultType="type">
+        select <include refid="typeAllColumn"></include> from blog_type
+        where type_name=#{typeName}
+    </select>
+
+    <select id="selectTypeAll" resultType="type">
+        select <include refid="typeAllColumn"></include>
+        from blog_type order by type_id
+    </select>
+
+    <!--
+        mybatis 支持自增主键，自增主键的值获取， mybatis 也是利用 statement.getGeneeratedKeys()；
+        useGenerateKeys="true"；使用自增主键获取主键值策略
+        keyProperties：指定对应主键属性，也就是 mybatis 获取到主键值以后，将这个值封装给 javaBean 的哪个属性
+    -->
+    <insert id="insertType" useGeneratedKeys="true" keyProperty="typeId">
+        insert into blog_type
+        values (null, #{typeName})
+    </insert>
+
+    <delete id="deleteTypeByTypeId">
+        delete from blog_type where type_id=#{typeId}
+    </delete>
+    <delete id="deleteTypeByTypeName">
+        delete from blog_type where type_name=#{typeName}
+    </delete>
+
+    <update id="updateType" parameterType="type">
+        update blog_type set type_name = #{typeName} where type_id=#{typeId}
+    </update>
+
+    <select id="topType" resultType="type">
+        SELECT <include refid="typeAllColumn"></include>
+        FROM blog_type
+        LEFT OUTER JOIN blog_blog ON blog_type.type_id = blog_blog.blog_type_id
+        GROUP BY type_id
+        ORDER BY COUNT(*) DESC
+        LIMIT #{topCount}
+    </select>
+
+
+
+
+
+
+
+
+
+
+</mapper>

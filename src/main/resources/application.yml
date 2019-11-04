@@ -1,0 +1,7 @@
+# properties 存在则 yml 不起作用
+spring:
+  thymeleaf:
+    mode: HTML
+  profiles:
+    active: dev
+

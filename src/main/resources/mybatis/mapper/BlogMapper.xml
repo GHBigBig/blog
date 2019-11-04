@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zjg.blog.mapper.BlogMapper">
+
+    <sql id="blogAllColumn">
+        blog_id, blog_title, blog_content, blog_first_picture, blog_flag,
+        blog_description, blog_views,blog_recommend, blog_appreciation,
+        blog_copyrightabled, blog_commentabled,blog_published, blog_create_time,
+        blog_update_time, blog_user_id, blog_type_id
+    </sql>
+
+    <sql id="onlyBlogColumn">
+        blog_id, blog_title, blog_content, blog_first_picture, blog_flag,
+        blog_description, blog_views,blog_recommend, blog_appreciation,
+        blog_copyrightabled, blog_commentabled,blog_published, blog_create_time,
+        blog_update_time
+    </sql>
+
+    <!--
+        在加了 collection 后无法自动映射 blog和tags 的结果，之前是可以的。
+            autoMapping	如果设置这个属性，MyBatis将会为本结果映射开启或者关闭自动映射。
+            这个属性会覆盖全局的属性 autoMappingBehavior。默认值：未设置（unset）。
+        在显示设置了 autoMapping=true 后可以设置了
+    -->
+    <resultMap id="blogResultMap" type="com.zjg.blog.pojo.Blog" autoMapping="true">
+        <id property="blogId" column="blog_id" />
+        <association property="type"
+                     select="com.zjg.blog.mapper.TypeMapper.selectTypeByTypeId"
+                     column="blog_type_id" />
+        <association property="user"
+                     select="com.zjg.blog.mapper.LoginMapper.findUerByUserId"
+                     column="blog_user_id" />
+        <collection property="tags" javaType="ArrayList" ofType="com.zjg.blog.pojo.Tag" autoMapping="true">
+            <id property="tagId" column="tag_id" />
+        </collection>
+
+    </resultMap>
+
+    <select id="selectBlogByBlogId" resultMap="blogResultMap">
+        <!-- 使用别的 mapper 中的 sql片段 -->
+        select <include refid="blogAllColumn"></include>,<include
+            refid="com.zjg.blog.mapper.TagMapper.tagAllColumn"></include>
+        from blog_blog bb
+        left outer join blog_blog_tag bbt on bb.blog_id=bbt.blog_tag_blog_id
+        left outer join blog_tag bt on bbt.blog_tag_tag_id=bt.tag_id
+        where bb.blog_id=#{blogId}
+    </select>
+
+    <select id="selectBlogByBlogName" resultMap="blogResultMap">
+        select <include refid="blogAllColumn"></include>
+        from blog_blog by blog_name=#{blogName}
+    </select>
+
+    <!-- 根据 blogTile 和 blogType 查询所有 -->
+    <select id="selectBlogAllByBlogTypeAndBlogTitleAndBlogRecommend" resultMap="blogResultMap">
+        select <include refid="blogAllColumn"></include>
+        from blog_blog
+        <where>
+            <if test="typeId != null">
+                blog_type_id = #{typeId}
+            </if>
+            <if test="blogTitle != null">
+                and blog_title like "%"#{blogTitle}"%"
+            </if>
+            <if test="blogRecommend != null">
+                and blog_recommend = #{blogRecommend}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据 typeId 查询用户 -->
+    <select id="selectBlogByTypeId" resultType="blog">
+        select <include refid="blogAllColumn"></include> from blog_blog where blog_type_id=#{typeId};
+    </select>
+
+    <insert id="insertBlog" parameterType="blog" useGeneratedKeys="true" keyProperty="blogId">
+        insert into blog_blog values (null, #{blogTitle}, #{blogContent}, #{blogFirstPicture},
+            #{blogFlag}, #{blogDescription} ,null, #{blogRecommend}, #{blogAppreciation},
+            #{blogCopyrightabled},#{blogCommentabled}, #{blogPublished}, #{blogCreateTime},
+            #{blogUpdateTime}, #{user.userId}, #{type.typeId})
+    </insert>
+
+    <!--
+        这里老报：The expression 'insertMap' evaluated to a null value
+        后来在 Mapper 的方法中添加了 @Param 就好了
+    -->
+    <insert id="insertBlogTag">
+        insert into blog_blog_tag values 
+        <foreach collection="insertMap" index="tagId" item="blogId" separator=",">
+            (#{blogId},#{tagId})
+        </foreach>
+    </insert>
+    
+    <delete id="deleteBlogTagByBlogId">
+        delete from blog_blog_tag where blog_tag_blog_id = #{blogId}
+    </delete>
+    
+    <update id="modifyBlog" parameterType="blog">
+        update blog_blog set blog_content = #{blogContent}, blog_title=#{blogTitle},
+            blog_flag=#{blogFlag}, blog_description=#{blogDescription},
+            blog_appreciation=#{blogAppreciation}, blog_commentabled=#{blogCommentabled},
+            blog_copyrightabled=#{blogCopyrightabled}, blog_first_picture=#{blogFirstPicture},
+            blog_update_time=#{blogUpdateTime}, blog_published=#{blogPublished},
+            blog_type_id=#{type.typeId}
+            where blog_id=#{blogId};
+    </update>
+
+    <delete id="deleteBlogByBlogId">
+        delete from blog_blog where blog_id=#{blogId}
+    </delete>
+
+    <select id="topRecommend" resultType="blog">
+        select <include refid="onlyBlogColumn"></include>
+        from blog_blog where blog_recommend=1
+        limit #{topCount}
+    </select>
+
+    <select id="selectBlogByTypdId" resultType="blog">
+        select <include refid="onlyBlogColumn"></include>
+        from blog_blog where blog_type_id=#{typeId}
+    </select>
+
+    <select id="selectBlogByTagId" resultType="blog">
+        select <include refid="onlyBlogColumn"></include>
+        from blog_blog bb
+        inner join blog_blog_tag bbt on bb.blog_id=bbt.blog_tag_blog_id
+        where bbt.blog_tag_tag_id=#{tagId}
+    </select>
+
+    <select id="selectBlogByTitleAndContent" resultMap="blogResultMap">
+        select <include refid="blogAllColumn"></include>
+        from blog_blog bb
+        where bb.blog_title like concat('%',#{blogQuery},'%') or bb.blog_content like concat('%',#{blogQuery},'%')
+    </select>
+
+    <update id="updateView">
+        update blog_blog set blog_views=blog_views+1 where blog_id=#{blogId}
+    </update>
+
+</mapper>

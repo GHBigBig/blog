@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：名称空间：指定接口的全类名 -->
+<mapper namespace="com.zjg.blog.mapper.LoginMapper">
+
+    <sql id="userColumnNotPassword">
+        user_id, user_nickname, user_name, user_email, user_role, user_portrait,
+        user_create_time, user_update_time
+    </sql>
+
+    <select id="findUserByUsernameAndPassword" resultType="user">
+        select * from blog_user where user_name=#{username} and user_password=#{password}
+    </select>
+
+    <select id="findUerByUserId" resultType="user">
+        select <include refid="userColumnNotPassword"></include>
+        from blog_user where user_id=#{userId}
+    </select>
+
+
+</mapper>
